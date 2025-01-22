@@ -1,0 +1,12 @@
+-Criar playlists melhores.
+-Evitar os mesmos artistas(até 3 vezes seguidas)
+-Melhores recomendações de músicas, principalmente na segunda opção.
+-Escolha entra duas opções:
+1-O programa ira criar uma playlist utilizando QUALQUER tipo de música que se encaixe no gênero, mesmo que ela tenha 150
+ouvintes mensais.
+2-O programa irá criar uma playlist utilizando músicas mais famosas do gênero escolhido, evitando músicas pouco conhecidas.
+-Seu sistema de criação é baseado em OUVINTES MENSAIS.
+-O programa é feito para escolher aleatoriamente as músicas diferente da primeira versão, evitando playlists iguais e 
+genéricas.
+-Sua busca por gêneros ficou muito melhor do que na primeira versão.
+21/01/2025
