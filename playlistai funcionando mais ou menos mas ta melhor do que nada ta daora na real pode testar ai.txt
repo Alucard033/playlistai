@@ -1,0 +1,128 @@
+import spotipy
+from spotipy.oauth2 import SpotifyOAuth
+import re
+import random
+
+# Configurações de autenticação (substitua pelos seus CLIENT_ID e CLIENT_SECRET)
+CLIENT_ID = "a5e579fd7f1d4b989b2761e92f0b6e38"
+CLIENT_SECRET = "e81e197241454a4292169f9f166a5188"
+REDIRECT_URI = "http://localhost:5000/callback"
+
+# Inicializa a autenticação do Spotify
+sp = spotipy.Spotify(auth_manager=SpotifyOAuth(
+    client_id=CLIENT_ID,
+    client_secret=CLIENT_SECRET,
+    redirect_uri=REDIRECT_URI,
+    scope="playlist-modify-public,playlist-modify-private"
+))
+
+
+def extrair_palavras_chave(comando):
+    # Remove palavras desnecessárias e mantém o essencial
+    palavras_uteis = re.sub(r'\b(crie|uma|playlist|de|com|para|músicas|e|o|a|as|os|em|por|relaxantes)\b', '', comando,
+                            flags=re.IGNORECASE)
+    palavras_chave = palavras_uteis.split()
+    return " ".join(palavras_chave).strip()
+
+
+def buscar_musicas(genero, aleatorio=True):
+    try:
+        print(f"Buscando músicas relacionadas a: '{genero}'...")
+
+        faixas = []
+        if aleatorio:
+            # Busca por músicas aleatórias dentro do gênero
+            resultados = sp.search(q=genero, type='track', limit=50)
+            faixas = resultados['tracks']['items']
+        else:
+            # Busca por músicas de artistas populares dentro do gênero
+            # Primeiro, buscar por artistas populares
+            resultados_artistas = sp.search(q=genero, type='artist', limit=10)
+            artistas_populares = [artista for artista in resultados_artistas['artists']['items']]
+
+            # Agora, buscamos as músicas desses artistas
+            for artista in artistas_populares:
+                musicas = sp.artist_top_tracks(artista['id'], country='US')['tracks']
+                for musica in musicas:
+                    faixas.append(musica)
+
+            # Ordenar as faixas por popularidade
+            faixas = sorted(faixas, key=lambda x: x['popularity'], reverse=True)
+
+        return faixas
+    except Exception as e:
+        print("Erro ao buscar músicas:", e)
+        return []
+
+
+def ajustar_playlist(faixas):
+    playlist = []
+    banda_anterior = None
+    contador_banda = 0
+
+    # Embaralha as músicas para mais originalidade
+    random.shuffle(faixas)
+
+    # Adiciona faixas à playlist
+    for faixa in faixas:
+        if banda_anterior == faixa['artists'][0]['name']:
+            contador_banda += 1
+        else:
+            banda_anterior = faixa['artists'][0]['name']
+            contador_banda = 1
+
+        # Se houver 3 músicas seguidas do mesmo artista, pula para outro
+        if contador_banda > 3:
+            continue
+
+        playlist.append(faixa)
+
+    return playlist
+
+
+def criar_playlist_dinamica(descricao, escolha):
+    palavras_chave = extrair_palavras_chave(descricao)
+    print(f"Buscando músicas relacionadas a: '{palavras_chave}'...")
+
+    # Verifica a escolha do usuário
+    if escolha == "1":
+        faixas = buscar_musicas(palavras_chave, aleatorio=True)
+    elif escolha == "2":
+        faixas = buscar_musicas(palavras_chave, aleatorio=False)
+    else:
+        print("Escolha inválida. Tente novamente.")
+        return
+
+    if not faixas:
+        print("Nenhuma música encontrada para esse gênero ou descrição.")
+        return
+
+    # Ajusta a playlist para evitar repetição de artistas e embaralha as músicas
+    faixas_ajustadas = ajustar_playlist(faixas)
+
+    todas_as_musicas = [faixa['uri'] for faixa in faixas_ajustadas if faixa.get('uri')]
+
+    # Criar nova playlist
+    usuario = sp.current_user().get('id', 'user')
+    nova_playlist = sp.user_playlist_create(usuario, f"Playlist - {palavras_chave.capitalize()}")
+    print(f"Playlist '{nova_playlist['name']}' criada com sucesso!")
+
+    # Adicionar músicas à nova playlist
+    sp.playlist_add_items(nova_playlist['id'], todas_as_musicas[:50])  # Limita a 50 músicas
+    print(f"{len(todas_as_musicas[:50])} músicas adicionadas à playlist.")
+
+
+if __name__ == "__main__":
+    comando = input("Digite o comando para criar sua playlist: ").lower()
+
+    # Pergunta para o usuário escolher entre as opções
+    print("Escolha como deseja que a playlist seja criada:")
+    print("1 - Completamente aleatório (faixas desconhecidas podem ser incluídas)")
+    print("2 - Bandas e músicas mais conhecidas")
+
+    escolha = input("Digite 1 ou 2: ")
+
+    try:
+        criar_playlist_dinamica(comando, escolha)
+    except Exception as e:
+        print("Erro ao processar o comando:", e)
