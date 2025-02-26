@@ -3,10 +3,10 @@ from spotipy.oauth2 import SpotifyOAuth
 import re
 import random
 
-# Configurações de autenticação (substitua pelos seus CLIENT_ID e CLIENT_SECRET)
-CLIENT_ID = "a5e579fd7f1d4b989b2761e92f0b6e38"
-CLIENT_SECRET = "e81e197241454a4292169f9f166a5188"
-REDIRECT_URI = "http://localhost:5000/callback"
+# Configurações de autenticação (substitua pelos seus CLIENT_ID e CLIENT_SECRET, tirei por questão de segurança)
+CLIENT_ID = "XXXXXXXXXXXX"
+CLIENT_SECRET = "XXXXXXXXXXXXXXXXX"
+REDIRECT_URI = "XXXXXXXXXXXXXXXXX"
 
 # Inicializa a autenticação do Spotify
 sp = spotipy.Spotify(auth_manager=SpotifyOAuth(
